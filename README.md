@@ -108,4 +108,58 @@ Due the lack of hardware resources the explanation will be mainly theorical. The
 
 Read [requirements.txt](requirements.txt)
 
-## Problem Solving
+# Problem Solving
+
+
+On these part I will describe the architecture I would use for these case. I will link to each python file simulating the steps of pipeline and explain tools to be used.
+
+### Disclaimer: about operational limits
+
+
+First of all I must set the boundaries I'm visualizing for this case. They are:
+
+* Data, for this context, does not demand real time data acquisition. 
+* The origin of data makes clear structure of response (JSON with defined keys)
+
+Regarding that I'm not considering any tool like Apache kafka (if stream) or RabbitMq (for atomic data) data realtime handling.
+
+## 0. Architecture
+
+![Architecture proposed](diagram_architecture.png)
+
+* For orchestration I would use apache airflow due to several features for scheduling running, workflows controls and native suport for python.
+
+* The SQLite db was used to simulate a datalake like database. 
+
+
+## 1. 
+
+
+
+Considering the documentation available about the [https://www.openbrewerydb.org/documentation](https://www.openbrewerydb.org/documentation) :
+
+| Field          | Type           | Description                                       |
+|----------------|----------------|---------------------------------------------------|
+| id             | string         | Unique identifier for the brewery                 |
+| name           | string         | Brewery name                                      |
+| brewery_type   | string         | Type of brewery (see by_type for possible values) |
+| address_1      | string or null | Primary street address                            |
+| address_2      | string or null | Secondary address line                            |
+| address_3      | string or null | Third address line                                |
+| city           | string         | City name                                         |
+| state_province | string         | State or province                                 |
+| postal_code    | string         | Postal or ZIP code                                |
+| country        | string         | Country name                                      |
+| longitude      | number or null | Longitude coordinate                              |
+| latitude       | number or null | Latitude coordinate                               |
+| phone          | string or null | Contact phone number                              |
+| website_url    | string or null | Brewery website URL                               |
+| state          | string         | State abbreviation or name (deprecated)           |
+| street         | string or null | Street address (deprecated)                       |
+
+
+## Medalion Layers
+
+### Bronze Layer
+
+Ingest data using python script to gether information in raw version. Save hole data in json file (depending on size of source is preferbly to )

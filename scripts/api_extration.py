@@ -1,15 +1,20 @@
 ## Import libs ---------------------------------------------------------
 import requests as rq
 import json
+import os
 
 ## Setting process configs --------------------------------------------
-api_url = "https://api.openbrewerydb.org/v1/breweries"          # API endpoint URL
-headers = {}                                                    # Optional headers (e.g., for authentication)
-page = 1                                                        # Page number for pagination (default is 1)
-per_page = 200                                                  # Number of items per page (considering API limits)
-block_count = 0                                                 # Counter for the number of blocks processed
-data_fetched = []                                               # List to store fetched data
+api_url = "https://api.openbrewerydb.org/v1/breweries"                  # API endpoint URL
+headers = {}                                                            # Optional headers (e.g., for authentication)
+page = 1                                                                # Page number for pagination (default is 1)
+per_page = 200                                                          # Number of items per page (considering API limits)
+block_count = 0                                                         # Counter for the number of blocks processed
+data_fetched = []                                                       # List to store fetched data
+base_dir = os.path.dirname(os.path.abspath(__file__))                   # File Base directory
+save_path = os.path.join(base_dir, "..", "data", "breweries_data.json") # Path to save the fetched data (adjust as needed)
 
+# 3. Optional: Ensure the directory exists before saving
+os.makedirs(os.path.dirname(save_path), exist_ok=True)
 ## Function to fetch data from API ----------------------------------
 def fetch_data_from_api(url, headers, page, per_page):
     params = {
@@ -51,4 +56,5 @@ while not end_flag:
         page += 1  # Move to the next page for the next request
 
 
-print(f"Total data fetched: {len(data_fetched)} items.")
+with open(save_path, 'w') as f:
+    json.dump(data_fetched, f, indent=4)

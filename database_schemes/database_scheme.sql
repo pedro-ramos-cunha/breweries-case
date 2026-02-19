@@ -58,6 +58,8 @@ CREATE TABLE brewery (
 	brwr_seq INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 	brwr_id TEXT(50) NOT NULL,
 	brwr_name TEXT(500) NOT NULL,
+    brwr_url TEXT(500) NULL,
+    brwr_phone TEXT(50) NULL,
     brwr_brtp_seq INTEGER NOT NULL,
     brwr_addr_seq INTEGER NULL,
     CONSTRAINT brewery_brtp_seq_fk 

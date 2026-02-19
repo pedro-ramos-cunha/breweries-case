@@ -24,7 +24,7 @@ df = pd.DataFrame(data)
 ## Basic transformations (Silver Layer requirements)--------------------------------------------
 ## * Accordin to API documentation, fields 'state' and 'street'
 ##   are deprecated, so I will drop than and use 'state_province' and 'address_1' instead.
-df = df.drop(columns=['state', 'street'], errors='ignore')
+df = df.drop(columns=['state', 'street', 'latitude','longitude','address_1','address_2','address_3','postal_code'], errors='ignore')
 
 ## Convert Pandas DataFrame to PyArrow Table ---------------------------------------------------
 table = pa.Table.from_pandas(df)

@@ -10,7 +10,11 @@ Breweries Case of Data Engineering. This repo concerns to a sample case data eng
     *   [Python Dependencies](#python-dependencies)
 *   [Problem Solving](#problem-solving) 
     * [Architecture Proposed](#0-architecture) 
-    * [Architecture Proposed](#0-architecture) 
+    * [Operational Boundaries](#disclaimer-about-operational-limits) 
+        * [Bronze Layer](#bronze-layer) 
+        * [Silver Layer](#silver-layer) 
+        * [Gold Layer](#gold-layer) 
+    * [Ploting Data Found](#silver-layer) 
 ## Context
 
 You work as a Data Engineer at a large brewing company, and your mission is to build a
@@ -130,7 +134,9 @@ Regarding that I'm not considering any tool like Apache kafka (if stream) or Rab
 ![Architecture proposed](diagram_architecture.png)
 
 * For orchestration I would use apache airflow due to several features for scheduling running, workflows controls and native suport for python.
-* The SQLite db was used to simulate a datalake like database. Depending the infraestructure, scalability and availability the database suggestion could change. For general purpouses I usually
+* The SQLite db was used to simulate a datalake like database.Usually I use Postregres as default, but my device have storage an processing capacity limitations.
+
+Depending the infraestructure, scalability and availability the database suggestion could change. For general purpouses I usually
 recommend Postgres due to a strong support community, it`s an open source tool (reduce costs of licensing or subscriptions) and have multiple plug-ins to help handling some commom problems of database, such as time series.
 
 ## 1. 
@@ -178,13 +184,36 @@ The original purspose was the below diagram.
 
 A preliminar analisys if data from API showed that informations from City, State_province and country seems to be not null (no null values returned). So, to reflects that structure I modeled the relationship diagra considering normalization rules. However, also based in the preliminar analysis, I concluded that neither address or location coordinates were usefull meanfull information to be extracted to golden layer due to lack of structed information and the gaps of data could not be filled (e.g. filling location coordinates with zero indicates that the breweries without that information are placed somewhere in the Atlantic Ocean, near african coast) and country/state_province/city coluns are already providing enough data for location.
 
-The table scheme
+The table scheme, data integrity ingestion and validation, and python file to run the treatment are
+* [scripts\treating_data.py](scripts\treating_data.py)
+* [scripts\database_scheme.sql](scripts\database_scheme.sql)
+* [scripts\database_integrity.sql](scripts\database_integrity.sql)
 
 
 ![Database diagram Final](brewery_case_final.png)
-
-
+This is the final diagram for silver layer
 
 ### Gold Layer
 
-On Database, we
+On Database, we create a calculation table with aggregation data grouping by
+* Country
+* state_province
+* brewery type
+* geometry_wkt (for ploting assistance)
+* n_of_breweries
+
+````
+CREATE TABLE aggr_brewery_by_country_state_brewry_type (
+	country text NOT NULL,
+	state_province text NOT NULL
+	brewery_type TEXT NOT NULL,
+	n_of_breweries INTEGER DEFAULT (0) NOT NULL
+);
+
+CREATE TABLE aggr_brewery_by_country_brewry_type (
+	country text NOT NULL,
+	state_province text NOT NULL
+	brewery_type TEXT NOT NULL,
+	n_of_breweries INTEGER DEFAULT (0) NOT NULL
+);
+````

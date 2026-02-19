@@ -42,7 +42,7 @@ pq.write_to_dataset(
 pq.write_to_dataset(
     table,
     root_path=parquet_path+"/breweries_data_by_type.parquet",
-    partition_cols=['country', 'brewery_type'],
+    partition_cols=['brewery_type'],
     compression='snappy'
 )
 

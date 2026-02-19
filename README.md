@@ -9,6 +9,8 @@ Breweries Case of Data Engineering. This repo concerns to a sample case data eng
 *   [Software Information](#tools-version)
     *   [Python Dependencies](#python-dependencies)
 *   [Problem Solving](#problem-solving) 
+    * [Architecture Proposed](#0-architecture) 
+    * [Architecture Proposed](#0-architecture) 
 ## Context
 
 You work as a Data Engineer at a large brewing company, and your mission is to build a
@@ -128,9 +130,8 @@ Regarding that I'm not considering any tool like Apache kafka (if stream) or Rab
 ![Architecture proposed](diagram_architecture.png)
 
 * For orchestration I would use apache airflow due to several features for scheduling running, workflows controls and native suport for python.
-
-* The SQLite db was used to simulate a datalake like database. 
-
+* The SQLite db was used to simulate a datalake like database. Depending the infraestructure, scalability and availability the database suggestion could change. For general purpouses I usually
+recommend Postgres due to a strong support community, it`s an open source tool (reduce costs of licensing or subscriptions) and have multiple plug-ins to help handling some commom problems of database, such as time series.
 
 ## 1. 
 
@@ -162,4 +163,28 @@ Considering the documentation available about the [https://www.openbrewerydb.org
 
 ### Bronze Layer
 
-Ingest data using python script to gether information in raw version. Save hole data in json file (depending on size of source is preferbly to )
+Ingest data using python script to gether information in raw version. Save hole data in json file (depending on size of source is preferbly to input data on a noSQL database do garanty minimum loss in ocasional failure of execution)
+
+The script of this step is available in [scripts\api_extration.py](scripts\api_extration.py)
+
+### Silver Layer
+
+Reading the API documentation I found that the street and state are deprecated. So I will drop those columns to clean data.
+
+Regarding data quality, my approach to validation and data integrity is stablishing an Relational Database with a clear relationship diagram to keep info clustered and optimized for storage. Information that maybe not available will be kept into specific tables to avoid empty fields.
+
+The original purspose was the below diagram.
+![Database diagram](brewery_case.png)
+
+A preliminar analisys if data from API showed that informations from City, State_province and country seems to be not null (no null values returned). So, to reflects that structure I modeled the relationship diagra considering normalization rules. However, also based in the preliminar analysis, I concluded that neither address or location coordinates were usefull meanfull information to be extracted to golden layer due to lack of structed information and the gaps of data could not be filled (e.g. filling location coordinates with zero indicates that the breweries without that information are placed somewhere in the Atlantic Ocean, near african coast) and country/state_province/city coluns are already providing enough data for location.
+
+The table scheme
+
+
+![Database diagram Final](brewery_case_final.png)
+
+
+
+### Gold Layer
+
+On Database, we

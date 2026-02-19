@@ -3,11 +3,13 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import json
 import os
+import sqlite3
+from sqlalchemy import create_engine
 
 ## Setting configs ---------------------------------------------------------------------------
 base_dir = os.path.dirname(os.path.abspath(__file__))                   # File Base directory
 json_path = os.path.join(base_dir, "..", "data", "breweries_data.json") # Path to the raw JSON file (Bronze Layer)
-parquet_path = os.path.join(base_dir, "..", "data") # Path to the output Parquet file (Silver Layer)
+data_path = os.path.join(base_dir, "..", "data") # Path to the output Parquet file (Silver Layer)
 
 ## Read the raw JSON file --------------------------------------------------------------------
 
@@ -35,15 +37,28 @@ table = pa.Table.from_pandas(df)
 
 pq.write_to_dataset(
     table,
-    root_path=parquet_path+"/breweries_data_by_country_and_state.parquet",
+    root_path=data_path+"/breweries_data_by_country_and_state.parquet",
     partition_cols=['country', 'state_province'],
     compression='snappy'
 )
 pq.write_to_dataset(
     table,
-    root_path=parquet_path+"/breweries_data_by_type.parquet",
+    root_path=data_path+"/breweries_data_by_type.parquet",
     partition_cols=['brewery_type'],
     compression='snappy'
 )
 
-print("Successfully transformed JSON to partitioned Parquet.")
+engine = create_engine('sqlite:///'+data_path+'\\brewery_case.db', echo=False)
+print(df.to_sql('breweries_semi_treated',engine, if_exists='replace', index=False))
+
+connection = engine.raw_connection()
+cursor = connection.cursor()
+
+with open(f"{base_dir}\\database_scheme.sql", 'r', encoding='utf-8') as file:
+        sql_query = file.read()
+cursor.executescript(sql_query)
+
+with open(f"{base_dir}\\database_integrity.sql", 'r', encoding='utf-8') as file:
+        sql_query = file.read()
+cursor.executescript(sql_query)
+connection.commit()

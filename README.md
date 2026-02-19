@@ -135,13 +135,12 @@ Regarding that I'm not considering any tool like Apache kafka (if stream) or Rab
 
 * For orchestration I would use apache airflow due to several features for scheduling running, workflows controls and native suport for python.
 * The SQLite db was used to simulate a datalake like database.Usually I use Postregres as default, but my device have storage an processing capacity limitations.
+* Storage: Local files for the demo (JSON/Parquet). Use object storage (S3, Azure Blob, GCS) in production.
 
 Depending the infraestructure, scalability and availability the database suggestion could change. For general purpouses I usually
 recommend Postgres due to a strong support community, it`s an open source tool (reduce costs of licensing or subscriptions) and have multiple plug-ins to help handling some commom problems of database, such as time series.
 
-## 1. 
-
-
+## Medalion Layers
 
 Considering the documentation available about the [https://www.openbrewerydb.org/documentation](https://www.openbrewerydb.org/documentation) :
 
@@ -165,11 +164,16 @@ Considering the documentation available about the [https://www.openbrewerydb.org
 | street         | string or null | Street address (deprecated)                       |
 
 
-## Medalion Layers
+
 
 ### Bronze Layer
 
 Ingest data using python script to gether information in raw version. Save hole data in json file (depending on size of source is preferbly to input data on a noSQL database do garanty minimum loss in ocasional failure of execution)
+
+* Script: scripts/api_extration.py  
+* Persist raw JSON responses (one file per run or partitioned by run date).  
+* Purpose: immutable raw records for replay and lineage.
+
 
 The script of this step is available in [scripts\api_extration.py](scripts\api_extration.py)
 
@@ -183,6 +187,17 @@ The original purspose was the below diagram.
 ![Database diagram](brewery_case.png)
 
 A preliminar analisys if data from API showed that informations from City, State_province and country seems to be not null (no null values returned). So, to reflects that structure I modeled the relationship diagra considering normalization rules. However, also based in the preliminar analysis, I concluded that neither address or location coordinates were usefull meanfull information to be extracted to golden layer due to lack of structed information and the gaps of data could not be filled (e.g. filling location coordinates with zero indicates that the breweries without that information are placed somewhere in the Atlantic Ocean, near african coast) and country/state_province/city coluns are already providing enough data for location.
+
+* Script: scripts/treating_data.py  
+* Transformations:
+  * Drop deprecated fields (street, state).
+  * Normalize location fields (country, state_province, city).
+  * Convert types and write Parquet partitioned by country/state_province.
+* DB artifacts:
+  * scripts/database_scheme.sql
+  * scripts/database_integrity.sql
+
+Notes: address and coordinates are often missing or inconsistent; do not impute coordinates with zeros.
 
 The table scheme, data integrity ingestion and validation, and python file to run the treatment are
 * [scripts\treating_data.py](scripts\treating_data.py)
@@ -199,7 +214,7 @@ On Database, we create a calculation table with aggregation data grouping by
 * Country
 * state_province
 * brewery type
-* geometry_wkt (for ploting assistance)
+
 * n_of_breweries
 
 ````
@@ -217,3 +232,38 @@ CREATE TABLE aggr_brewery_by_country_brewry_type (
 	n_of_breweries INTEGER DEFAULT (0) NOT NULL
 );
 ````
+The file database [scripts\database_calculated_tables.sql](scripts\database_calculated_tables.sql) create those tables and populate them accordind data model on database
+
+
+## How to run (Quickstart)
+
+1. Install dependencies:
+   - python -m pip install -r requirements.txt
+2. Fetch raw data (bronze):
+   - python scripts/api_extration.py
+3. Transform (silver):
+   - python scripts/treating_data.py
+4. Aggregate / Load (gold):
+   - Run SQL scripts/show_data.py
+
+
+## Data quality & Observability
+
+* Schema validation (required fields present).
+* Null checks for critical fields (country, city, state_province).
+* Drop unusefull data for analysis
+* Row-count and delta checks
+
+Observability:
+* Logs, metrics (task duration, error rates).
+* Alerts: Slack/Email on failures or data-quality breaches.
+* Monitoring stack: I use grafana normally due open source license, but are many others available.
+
+## Limitations
+
+* Local demo uses SQLite and local files. For production, use object storage and PostgreSQL. 
+
+## Contact
+
+Author: Pedro Ramos Cunha
+Email: pedroramoscunha@alumni.usp.br
